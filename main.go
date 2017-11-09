@@ -1,17 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"text/template"
-	"io"
-	"os"
-	"io/ioutil"
 	"flag"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"text/template"
 )
 
 type Ctx struct {
-	Css string
-	Js string
+	Css  string
+	Js   string
 	Json string
 }
 
@@ -21,7 +21,7 @@ func unsafeReadAll(r io.Reader) string {
 }
 
 func unsafeAsset(path string) string {
-	data, err := Asset(path);
+	data, err := Asset(path)
 	if err != nil {
 		panic(err)
 	}
@@ -53,7 +53,7 @@ func main() {
 	if *outputFilePath == "" {
 		outputFile = os.Stdout
 	} else {
-		outputFile, err = os.OpenFile(*outputFilePath, os.O_RDWR | os.O_CREATE, 0755);
+		outputFile, err = os.OpenFile(*outputFilePath, os.O_RDWR|os.O_CREATE, 0755)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Could not process output file:", err)
 			os.Exit(1)
@@ -62,13 +62,17 @@ func main() {
 		defer outputFile.(*os.File).Close()
 	}
 
-	tmpl, err := template.New("asciinema").Parse(unsafeAsset("data/template.html"));
-	if err != nil { panic(err) }
+	tmpl, err := template.New("asciinema").Parse(unsafeAsset("data/template.html"))
+	if err != nil {
+		panic(err)
+	}
 	ctx := Ctx{
-		Css: unsafeAsset("data/asciinema-player.css"),
-		Js: unsafeAsset("data/asciinema-player.js"),
+		Css:  unsafeAsset("data/asciinema-player.css"),
+		Js:   unsafeAsset("data/asciinema-player.js"),
 		Json: unsafeReadAll(inputFile),
 	}
-	err = tmpl.Execute(outputFile, ctx);
-	if err != nil { panic(err) }
+	err = tmpl.Execute(outputFile, ctx)
+	if err != nil {
+		panic(err)
+	}
 }
