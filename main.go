@@ -38,6 +38,11 @@ func main() {
 	outputFilePath := flag.String("out", "", "Ouput html file")
 
 	flag.Parse()
+	if len(flag.Args()) != 0 {
+		flag.Usage()
+		os.Exit(1)
+	}
+
 	if *inputFilePath == "" {
 		inputFile = os.Stdin
 	} else {
