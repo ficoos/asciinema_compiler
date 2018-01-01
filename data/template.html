@@ -1,0 +1,21 @@
+<html>
+<head>
+	<meta charset="UTF-8"> 
+	<style>
+	{{.Css}}
+	</style>
+</head>
+<body>
+	<div id="player"></div>
+	<script language="JavaScript">
+	{{.Js}}
+	</script>
+
+	<script language="JavaScript">
+		asciinema.player.js.CreatePlayer(
+		'player',
+		{{.Json}}
+	);
+	</script>
+</body>
+</html>
