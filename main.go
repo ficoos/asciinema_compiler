@@ -12,7 +12,7 @@ import (
 type Ctx struct {
 	Css  string
 	Js   string
-	Json string
+	Cast string
 }
 
 func unsafeReadAll(r io.Reader) string {
@@ -58,7 +58,7 @@ func main() {
 	if *outputFilePath == "" {
 		outputFile = os.Stdout
 	} else {
-		outputFile, err = os.OpenFile(*outputFilePath, os.O_RDWR|os.O_CREATE, 0755)
+		outputFile, err = os.OpenFile(*outputFilePath, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0755)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Could not process output file:", err)
 			os.Exit(1)
@@ -74,7 +74,7 @@ func main() {
 	ctx := Ctx{
 		Css:  unsafeAsset("data/asciinema-player.css"),
 		Js:   unsafeAsset("data/asciinema-player.js"),
-		Json: unsafeReadAll(inputFile),
+		Cast: unsafeReadAll(inputFile),
 	}
 	err = tmpl.Execute(outputFile, ctx)
 	if err != nil {
