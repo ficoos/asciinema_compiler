@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"text/template"
 )
 
@@ -21,12 +23,20 @@ func unsafeReadAll(r io.Reader) string {
 }
 
 func unsafeAsset(path string) string {
-	data, err := Asset(path)
-	if err != nil {
-		panic(err)
+	data, ok := RES.String(path)
+	if !ok {
+		panic("failed to open loaded resource")
 	}
 
 	return string(data)
+}
+
+func b64EncodeString(name string) string {
+	var outBuf strings.Builder
+	encoder := base64.NewEncoder(base64.StdEncoding, &outBuf)
+	encoder.Write([]byte(name))
+	encoder.Close()
+	return outBuf.String()
 }
 
 func main() {
@@ -67,14 +77,14 @@ func main() {
 		defer outputFile.(*os.File).Close()
 	}
 
-	tmpl, err := template.New("asciinema").Parse(unsafeAsset("data/template.html"))
+	tmpl, err := template.New("asciinema").Parse(unsafeAsset("/data/template.html"))
 	if err != nil {
 		panic(err)
 	}
 	ctx := Ctx{
-		Css:  unsafeAsset("data/asciinema-player.css"),
-		Js:   unsafeAsset("data/asciinema-player.js"),
-		Cast: unsafeReadAll(inputFile),
+		Css:  unsafeAsset("/data/asciinema-player.css"),
+		Js:   unsafeAsset("/data/asciinema-player.js"),
+		Cast: b64EncodeString(unsafeReadAll(inputFile)),
 	}
 	err = tmpl.Execute(outputFile, ctx)
 	if err != nil {
