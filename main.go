@@ -1,42 +1,52 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"flag"
 	"fmt"
+	"github.com/ulikunitz/xz/lzma"
 	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 	"text/template"
 )
 
 type Ctx struct {
-	Css  string
-	Js   string
-	Cast string
+	Css      string
+	PlayerJs string
+	LzmaJs   string
+	Cast     string
 }
 
-func unsafeReadAll(r io.Reader) string {
+func unsafeReadAll(r io.Reader) []byte {
 	res, _ := ioutil.ReadAll(r)
-	return string(res)
+	return res
 }
 
 func unsafeAsset(path string) string {
-	data, ok := RES.String(path)
-	if !ok {
-		panic("failed to open loaded resource")
+	data, err := Asset(path)
+	if err != nil {
+		panic(fmt.Sprintf("failed to open loaded resource, %s", err))
 	}
 
 	return string(data)
 }
 
-func b64EncodeString(name string) string {
-	var outBuf strings.Builder
+func b64Encode(data []byte) []byte {
+	var outBuf bytes.Buffer
 	encoder := base64.NewEncoder(base64.StdEncoding, &outBuf)
-	encoder.Write([]byte(name))
+	encoder.Write(data)
 	encoder.Close()
-	return outBuf.String()
+	return outBuf.Bytes()
+}
+
+func lzmaEncode(data []byte) []byte {
+	var outBuf bytes.Buffer
+	writer, _ := lzma.NewWriter(&outBuf)
+	writer.Write(data)
+	writer.Close()
+	return outBuf.Bytes()
 }
 
 func main() {
@@ -77,14 +87,15 @@ func main() {
 		defer outputFile.(*os.File).Close()
 	}
 
-	tmpl, err := template.New("asciinema").Parse(unsafeAsset("/data/template.html"))
+	tmpl, err := template.New("asciinema").Parse(unsafeAsset("data/template.html"))
 	if err != nil {
 		panic(err)
 	}
 	ctx := Ctx{
-		Css:  unsafeAsset("/data/asciinema-player.css"),
-		Js:   unsafeAsset("/data/asciinema-player.js"),
-		Cast: b64EncodeString(unsafeReadAll(inputFile)),
+		Css:      unsafeAsset("data/asciinema-player.css"),
+		PlayerJs: string(b64Encode(lzmaEncode([]byte(unsafeAsset("data/asciinema-player.js"))))),
+		LzmaJs:   unsafeAsset("data/lzma-d-min.js"),
+		Cast:     string(b64Encode(lzmaEncode(unsafeReadAll(inputFile)))),
 	}
 	err = tmpl.Execute(outputFile, ctx)
 	if err != nil {

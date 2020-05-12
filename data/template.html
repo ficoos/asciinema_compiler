@@ -8,18 +8,21 @@
 <body>
 	<div id="player"></div>
 	<script language="JavaScript">
-	{{.Js}}
+	{{.LzmaJs}}
 	</script>
+
+	<div id="player-js" style="display:none">
+	{{.PlayerJs}}
+	</div>
 
 	<div id='cast' style="display:none">{{.Cast}}</div>
 	<script language="JavaScript">
-		function b64DecodeUnicode(str) {
+		function b64Decode(str) {
 			// Going backwards: from bytestream, to percent-encoding, to original string.
-			return decodeURIComponent(atob(str).split('').map(function(c) {
-				return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-			}).join(''));
+			return LZMA.decompress(Uint8Array.from(atob(str), c => c.charCodeAt(0)))
 		}
-		var data = b64DecodeUnicode(document.getElementById('cast').innerHTML)
+		eval(b64Decode(document.getElementById('player-js').innerHTML))
+		var data = b64Decode(document.getElementById('cast').innerHTML)
 		try {
 			data = JSON.parse(data)
 		} catch {
