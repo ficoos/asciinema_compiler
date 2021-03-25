@@ -5,11 +5,13 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
-	"github.com/ulikunitz/xz/lzma"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"text/template"
+
+	"github.com/ulikunitz/xz/lzma"
 )
 
 type Ctx struct {
@@ -17,6 +19,7 @@ type Ctx struct {
 	PlayerJs string
 	LzmaJs   string
 	Cast     string
+	Font     string
 }
 
 func unsafeReadAll(r io.Reader) []byte {
@@ -56,6 +59,11 @@ func main() {
 
 	inputFilePath := flag.String("in", "", "Input record json file")
 	outputFilePath := flag.String("out", "", "Ouput html file")
+	fontFilePath := flag.String(
+		"font",
+		"",
+		"Font to embed (currently only TTF supported)",
+	)
 
 	flag.Parse()
 	if len(flag.Args()) != 0 {
@@ -68,11 +76,19 @@ func main() {
 	} else {
 		inputFile, err = os.Open(*inputFilePath)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Could not process input file:", err)
+			fmt.Fprintln(os.Stderr, "Could not open input file:", err)
 			os.Exit(1)
 		}
 
 		defer inputFile.(*os.File).Close()
+	}
+
+	inputfile, err := io.ReadAll(inputFile)
+	if err != nil {
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Could not read input file:", err)
+			os.Exit(1)
+		}
 	}
 
 	if *outputFilePath == "" {
@@ -95,7 +111,15 @@ func main() {
 		Css:      unsafeAsset("data/asciinema-player.css"),
 		PlayerJs: string(b64Encode(lzmaEncode([]byte(unsafeAsset("data/asciinema-player.js"))))),
 		LzmaJs:   unsafeAsset("data/lzma-d-min.js"),
-		Cast:     string(b64Encode(lzmaEncode(unsafeReadAll(inputFile)))),
+		Cast:     string(b64Encode(lzmaEncode(inputfile))),
+	}
+	if *fontFilePath != "" {
+		fontFile, err := ioutil.ReadFile(*fontFilePath)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Could not read font file:", err)
+			os.Exit(1)
+		}
+		ctx.Font = string(b64Encode(fontFile))
 	}
 	err = tmpl.Execute(outputFile, ctx)
 	if err != nil {

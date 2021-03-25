@@ -4,9 +4,32 @@
 	<style>
 	{{.Css}}
 	</style>
+	<style>
+		#player-container {
+			height: 100%;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+		}
+	</style>
 </head>
 <body>
-	<div id="player"></div>
+	{{ if ne .Font "" }}
+	<style>
+	@font-face {
+		font-family: "TerminalFont";
+		src: url(data:application/x-font-ttf;charset=utf-8;base64,{{.Font}}) format("truetype");
+		font-weight: normal;
+		font-style: normal;
+	}
+	.asciinema-terminal {
+		font-family: 'TerminalFont';
+	}
+	</style>
+	{{ end }}
+	<div id="player-container">
+		<div id="player"></div>
+	</div>
 	<script language="JavaScript">
 	{{.LzmaJs}}
 	</script>
@@ -17,19 +40,18 @@
 
 	<div id='cast' style="display:none">{{.Cast}}</div>
 	<script language="JavaScript">
-		function b64Decode(str) {
+		function decode(str) {
 			// Going backwards: from bytestream, to percent-encoding, to original string.
 			return LZMA.decompress(Uint8Array.from(atob(str), c => c.charCodeAt(0)))
 		}
-		eval(b64Decode(document.getElementById('player-js').innerHTML))
-		var data = b64Decode(document.getElementById('cast').innerHTML)
+		eval(decode(document.getElementById('player-js').innerHTML))
+		var data = decode(document.getElementById('cast').innerHTML)
 		try {
 			data = JSON.parse(data)
-		} catch {
+		} catch (e) {
 			data = data.match(/.*\n/g).map(JSON.parse)
 		}
-		player = asciinema.player.js.CreatePlayer(
-		'player', data);
+		player = asciinema.player.js.CreatePlayer('player', data);
 	</script>
 </body>
 </html>
