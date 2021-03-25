@@ -25,7 +25,7 @@ func unsafeReadAll(r io.Reader) []byte {
 }
 
 func unsafeAsset(path string) string {
-	data, err := Asset(path)
+	data, err := fs.ReadFile(assets, path)
 	if err != nil {
 		panic(fmt.Sprintf("failed to open loaded resource, %s", err))
 	}
